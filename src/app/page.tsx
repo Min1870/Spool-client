@@ -5,6 +5,7 @@ import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import HeroBanner from "@/components/HeroBanner";
 import MovieRow from "@/components/MovieRow";
+import SpoolRow from "@/components/SpoolRow";
 import TopTenRow from "@/components/TopTenRow";
 import { homeRows } from "@/lib/siteConfig";
 import { getTrending, getTrendingAll, getTrendingTv } from "@/lib/tmdb";
@@ -23,6 +24,9 @@ export default function HomePage() {
       <div className="relative z-10 -mt-16 space-y-6 pb-8 sm:-mt-24 md:space-y-10">
         <ErrorBoundary>
           <ContinueWatchingRow />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <SpoolRow />
         </ErrorBoundary>
         <ErrorBoundary>
           <MovieRow {...firstRow} />

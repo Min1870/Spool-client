@@ -16,6 +16,7 @@ export const navLinks = [
   { href: "/", label: "Home" },
   { href: "/movies", label: "Movies" },
   { href: "/tv", label: "Series" },
+  { href: "/spool", label: "Creators" },
   { href: "/my-list", label: "My List" },
 ] as const;
 

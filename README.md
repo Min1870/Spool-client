@@ -34,3 +34,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Creator videos from Spool
+
+This site also shows videos uploaded on [Spool](../MSW_admin) (a separate project) on the home page
+("Fresh from Creators") and under **Creators** (`/spool`).
+
+1. Start Spool (in `D:\Work Folder\MSW_admin`): `docker compose up -d`, then `cd web` and `npm run dev`
+   (port 3000).
+2. In this folder, make sure `.env.local` has `NEXT_PUBLIC_SPOOL_API_URL=http://localhost:3000`
+   (see `.env.example`).
+3. `npm run dev` here (port **3001**) and open http://localhost:3001.
+
+If Spool isn't running, the creator sections simply don't appear; the rest of the site works as before.

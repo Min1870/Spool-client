@@ -348,6 +348,8 @@ export interface VideoPlayerProps {
   eyebrow?: string;
   /** Shown next to the title, e.g. the episode name. */
   subtitle?: string;
+  /** Overrides the source label after the eyebrow (e.g. "Adaptive HD" for Spool streams). */
+  sourceLabel?: string;
   onClose: () => void;
   /** Called every few seconds and on unmount with the playback position. */
   onProgress?: (position: number, duration: number) => void;
@@ -365,6 +367,7 @@ export default function VideoPlayer({
   variant = "modal",
   eyebrow,
   subtitle,
+  sourceLabel,
   onClose,
   onProgress,
   onEnded,
@@ -644,7 +647,7 @@ export default function VideoPlayer({
         )}
         <div className={clsx("min-w-0", variant === "page" && "mr-auto")}>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60 sm:text-xs">
-            {eyebrow ?? "Trailer"} · {source ? SOURCE_LABEL[source.kind] : "Loading…"}
+            {eyebrow ?? "Trailer"} · {source ? (sourceLabel ?? SOURCE_LABEL[source.kind]) : "Loading…"}
           </p>
           <h2 className="truncate font-display text-lg font-bold sm:text-2xl">
             {movie.title}{" "}

@@ -62,3 +62,21 @@ When executing tasks in this repository, Claude Code must follow these operation
 3. **Trailer Playback Focus:** Ensure video player UI elements (Play, Pause, Progress Bar, Fullscreen, Volume) interact properly with trailer sources during Phase 1 testing.
 4. **TypeScript First:** Maintain strict TypeScript interfaces (`Movie`, `Genre`, `TrailerVideo`, `UserWatchState`) across all components and utility functions.
 5. **Responsive Design:** Ensure every visual component is fully responsive across mobile, tablet, and desktop viewports using Tailwind classes.
+
+---
+
+## 🎞️ Spool integration (creator uploads)
+
+MSW also shows videos uploaded on **Spool** (the sibling project at `D:\Work Folder\MSW_admin`),
+next to the TMDB catalogue: the "Fresh from Creators" home row, `/spool` (all creator videos)
+and `/spool/[id]` (full-screen player).
+
+- Data comes from Spool's **public API** only, fetched in the browser (fits the client-first rule):
+  `GET {NEXT_PUBLIC_SPOOL_API_URL}/api/videos?limit=…` and `/api/videos/{id}`. No keys, no backend,
+  no Supabase client here. Spool sends CORS headers, so the browser may call it from this site.
+- Playback: the API returns an HLS `hlsUrl` (480p + 720p). Play it with `{ kind: "hls", url }`
+  in `VideoPlayer` (hls.js). Spool thumbnails use a plain `<img>` because their host is environment-specific.
+- All Spool code lives in `src/lib/spool.ts`, `src/components/SpoolCard.tsx`, `src/components/SpoolRow.tsx`
+  and `src/app/spool/`. If Spool is unconfigured or offline, Spool sections hide themselves; the rest
+  of the site must keep working.
+- Ports: Spool's web app runs on **3000**, MSW on **3001** (`npm run dev`).
