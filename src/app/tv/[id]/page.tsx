@@ -1,9 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useParams } from "next/navigation";
-import TitleDetails from "@/components/TitleDetails";
-
+// Series aren't on MSW (only movies uploaded to Spool are). Old series links go home.
 export default function SeriesDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  return <TitleDetails mediaType="tv" id={Number(id)} />;
+  redirect("/");
 }

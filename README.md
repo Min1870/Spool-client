@@ -35,15 +35,24 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-## Creator videos from Spool
+## Content comes from Spool
 
-This site also shows videos uploaded on [Spool](../MSW_admin) (a separate project) on the home page
-("Fresh from Creators") and under **Creators** (`/spool`).
+MSW shows **only what's uploaded to [Spool](../MSW_admin)** (a separate project, the admin/upload site):
+
+- **Movies:** Spool uploads linked to a TMDB movie. MSW shows them with TMDB's poster, backdrop,
+  overview, genres and cast, and **Play** streams the uploaded file. Home, **Movies**, search and
+  My List only ever contain these. Any other TMDB title says "isn't available on MSW".
+- **Creators:** Spool uploads that aren't linked to a movie ("Fresh from Creators" row, `/spool`).
+
+To add a movie: upload it in Spool, pick the movie in **Link to TMDB**, and wait for it to finish
+processing. It appears here within about a minute.
+
+### Run it
 
 1. Start Spool (in `D:\Work Folder\MSW_admin`): `docker compose up -d`, then `cd web` and `npm run dev`
    (port 3000).
 2. In this folder, make sure `.env.local` has `NEXT_PUBLIC_SPOOL_API_URL=http://localhost:3000`
-   (see `.env.example`).
+   (see `.env.example`) and your TMDB key (`NEXT_PUBLIC_TMDB_API_KEY`).
 3. `npm run dev` here (port **3001**) and open http://localhost:3001.
 
-If Spool isn't running, the creator sections simply don't appear; the rest of the site works as before.
+If Spool isn't reachable, the site is empty ("No movies yet").

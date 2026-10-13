@@ -57,7 +57,9 @@ export default function HeroBanner({ movies, loading }: HeroBannerProps) {
   const playerOpen = usePlayerStore((s) => s.isOpen);
   const count = featured.length;
 
-  if (loading || count === 0) return <HeroSkeleton />;
+  if (loading) return <HeroSkeleton />;
+  // Nothing with a backdrop to feature: keep the space under the navbar, show no banner.
+  if (count === 0) return <div aria-hidden className="h-40 sm:h-48" />;
 
   const index = active % count;
   const movie = featured[index];
@@ -106,9 +108,10 @@ export default function HeroBanner({ movies, loading }: HeroBannerProps) {
         <div key={mediaKey(movie)} className="max-w-2xl animate-rise">
           <p className="mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-white/80">
             <span className="bg-gradient-brand rounded px-1.5 py-0.5 text-[10px] tracking-widest text-white">
-              #{index + 1}
+              {index === 0 ? "New" : "Now"}
             </span>
-            {movie.mediaType === "tv" ? "Series" : "Movie"} · Trending Today
+            {/* Featured = the newest uploads on MSW, not TMDB's trending list. */}
+            {index === 0 ? "Just Added" : "Now Streaming"}
           </p>
           <h1 className="font-display text-4xl leading-[1.05] font-bold drop-shadow-xl sm:text-5xl lg:text-6xl xl:text-7xl">
             {movie.title}

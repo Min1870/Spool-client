@@ -3,7 +3,9 @@
 import { Play, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { getCatalogIds } from "@/lib/catalog";
 import { formatTime } from "@/lib/format";
+import { useAsync } from "@/lib/useAsync";
 import { backdropUrl, episodeLabel, mediaKey, watchHref } from "@/lib/tmdb";
 import { sortContinueWatching, useWatchStore } from "@/store/useWatchStore";
 import { RowHeader, RowScroller } from "./MovieRow";
@@ -11,7 +13,10 @@ import { RowHeader, RowScroller } from "./MovieRow";
 export default function ContinueWatchingRow({ title = "Continue Watching" }: { title?: string }) {
   const progress = useWatchStore((s) => s.progress);
   const removeProgress = useWatchStore((s) => s.removeProgress);
-  const items = sortContinueWatching(progress);
+  // Only titles that are still on MSW (uploaded to Spool); older saved progress for other
+  // titles (e.g. trailers watched before) is hidden.
+  const { data: onMsw } = useAsync("catalog:ids", getCatalogIds);
+  const items = sortContinueWatching(progress).filter((p) => p.movie.mediaType === "movie" && onMsw?.has(p.movie.id));
 
   if (items.length === 0) return null;
 

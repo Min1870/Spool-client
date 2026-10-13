@@ -16,12 +16,10 @@ export default function Footer() {
           ))}
         </ul>
         <p className="mt-8 max-w-2xl text-xs leading-relaxed text-white/40">
-          This product uses the TMDB API but is not endorsed or certified by TMDB. Trailers are
-          streamed from their official YouTube sources.
+          Movies stream from Spool. Movie details and images come from the TMDB API; this product is not
+          endorsed or certified by TMDB. Trailers are streamed from their official YouTube sources.
         </p>
-        <p className="mt-2 text-xs text-white/40">
-          © {new Date().getFullYear()} {siteName}. UI preview — Phase 1.
-        </p>
+        <p className="mt-2 text-xs text-white/40">© {new Date().getFullYear()} {siteName}.</p>
       </div>
     </footer>
   );

@@ -93,8 +93,8 @@ function SearchBox() {
             inputRef.current?.blur();
           }
         }}
-        placeholder="Movies, series, genres"
-        aria-label="Search movies and series"
+        placeholder="Search movies, actors"
+        aria-label="Search movies"
         tabIndex={open ? 0 : -1}
         className="w-full min-w-0 bg-transparent pr-3 text-sm outline-none placeholder:text-white/50 [&::-webkit-search-cancel-button]:hidden"
       />

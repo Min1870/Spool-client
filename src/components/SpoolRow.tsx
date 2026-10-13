@@ -8,7 +8,8 @@ import SpoolCard from "./SpoolCard";
 
 /** Home-page row of the newest Spool uploads. Renders nothing if Spool has no videos or is offline. */
 export default function SpoolRow() {
-  const { data, loading } = useAsync("spool:latest", () => getSpoolVideos(20));
+  // Creator originals only: uploads linked to TMDB movies appear in "Now Streaming" instead.
+  const { data, loading } = useAsync("spool:latest", () => getSpoolVideos(20, { linked: false }));
   const title = "Fresh from Creators";
 
   if (loading) {

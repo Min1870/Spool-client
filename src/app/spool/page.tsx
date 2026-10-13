@@ -8,7 +8,8 @@ import { useAsync } from "@/lib/useAsync";
 
 /** All creator uploads from Spool, newest first. */
 export default function SpoolPage() {
-  const { data, loading, retry } = useAsync("spool:all", () => getSpoolVideos(50));
+  // Creator originals; full movies (TMDB-linked uploads) live on their TMDB movie pages.
+  const { data, loading, retry } = useAsync("spool:all", () => getSpoolVideos(50, { linked: false }));
 
   return (
     <div className="gutter pt-28 pb-16">

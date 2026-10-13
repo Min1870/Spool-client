@@ -10,13 +10,12 @@ import VideoPlayer, { IconButton } from "@/components/player/VideoPlayer";
 import {
   detailHref,
   episodeLabel,
-  getDetails,
   getSeasonEpisodes,
-  getTrailerSource,
   watchHref,
 } from "@/lib/tmdb";
+import { getCatalog } from "@/lib/catalog";
 import { useAsync } from "@/lib/useAsync";
-import type { EpisodeRef, MediaType, MovieDetails } from "@/lib/types";
+import type { EpisodeRef, MediaType, MovieDetails, PlayerSource } from "@/lib/types";
 import { useWatchStore } from "@/store/useWatchStore";
 
 const isMediaType = (v: string): v is MediaType => v === "movie" || v === "tv";
@@ -71,7 +70,8 @@ function WatchView() {
 
   const mediaType = isMediaType(params.type) ? params.type : null;
   const id = Number(params.id);
-  const valid = mediaType !== null && Number.isInteger(id);
+  // MSW only plays movies uploaded to Spool (series aren't on MSW yet).
+  const valid = mediaType === "movie" && Number.isInteger(id);
   const episode: EpisodeRef | undefined =
     mediaType === "tv"
       ? { season: positiveInt(search.get("s"), 1), episode: positiveInt(search.get("e"), 1) }
@@ -79,15 +79,14 @@ function WatchView() {
   const startAt = positiveInt(search.get("t"), 0);
   const playKey = `${mediaType}:${id}:${episode ? episodeLabel(episode) : ""}`;
 
-  const details = useAsync(valid ? `details:${mediaType}:${id}` : null, () => getDetails(mediaType ?? "movie", id));
-  const source = useAsync(valid ? `source:${playKey}` : null, () =>
-    getTrailerSource({ mediaType: mediaType ?? "movie", id }, episode),
-  );
+  // The movie and what to play both come from the catalogue: TMDB details + the Spool
+  // upload's HLS stream. A movie that isn't uploaded isn't on MSW, so it can't be played.
+  const catalog = useAsync(valid ? "catalog" : null, getCatalog);
+  const show = catalog.data?.find((m) => m.id === id);
+  const source: PlayerSource | null = show?.spool.hlsUrl ? { kind: "hls", url: show.spool.hlsUrl } : null;
   const episodes = useAsync(episode ? `season:${id}:${episode.season}` : null, () =>
     getSeasonEpisodes(id, episode?.season ?? 1),
   );
-
-  const show = details.data;
   const currentEpisode = episodes.data?.find((e) => e.episodeNumber === episode?.episode);
 
   // Next episode: same season, else first episode of the next season.
@@ -103,11 +102,14 @@ function WatchView() {
     else router.push(show ? detailHref(show) : "/");
   };
 
-  if (!valid || details.error) {
+  if (!valid || catalog.error || (catalog.data && !show)) {
     return (
       <div className="fixed inset-0 z-[90] grid place-items-center bg-black p-6">
         <div className="w-full max-w-md">
-          <ErrorState message="This title isn't available." onRetry={valid ? details.retry : undefined} />
+          <ErrorState
+            message={catalog.error ? "We couldn't load this title." : "This title isn't available on MSW."}
+            onRetry={catalog.error ? catalog.retry : undefined}
+          />
         </div>
       </div>
     );
@@ -121,12 +123,13 @@ function WatchView() {
         </div>
       ) : (
         <VideoPlayer
-          key={`${playKey}:${source.data ? "ready" : "pending"}`}
+          key={`${playKey}:${source ? "ready" : "pending"}`}
           variant="page"
           movie={show}
-          source={source.data ?? null}
+          source={source}
           startAt={startAt}
           eyebrow={episode ? episodeLabel(episode) : "Now Playing"}
+          sourceLabel="Spool HD"
           subtitle={currentEpisode?.name}
           onClose={leave}
           onProgress={(position, duration) =>

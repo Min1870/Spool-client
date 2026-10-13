@@ -65,18 +65,28 @@ When executing tasks in this repository, Claude Code must follow these operation
 
 ---
 
-## 🎞️ Spool integration (creator uploads)
+## 🎞️ Spool integration: MSW shows ONLY what's uploaded to Spool
 
-MSW also shows videos uploaded on **Spool** (the sibling project at `D:\Work Folder\MSW_admin`),
-next to the TMDB catalogue: the "Fresh from Creators" home row, `/spool` (all creator videos)
-and `/spool/[id]` (full-screen player).
+> This supersedes the TMDB-catalogue strategy above. MSW no longer browses TMDB's catalogue:
+> **its catalogue = movies uploaded to Spool** (the sibling project at `D:\Work Folder\MSW_admin`)
+> and linked to their TMDB entry. TMDB is used only for those movies' details (title, poster,
+> backdrop, overview, genres, cast) and the Trailer button.
+
+- `src/lib/catalog.ts` (`getCatalog`) builds the catalogue: Spool's TMDB-linked uploads + TMDB details
+  for each (falls back to Spool's saved title/year/poster if TMDB is unreachable). Every page reads it:
+  home (hero, "Now Streaming", genre rows once a genre has 2+ movies), `/movies`, `/search`,
+  `/movie/[id]` (anything not in the catalogue → "isn't available on MSW"), `/watch/movie/[id]` (plays the
+  upload's HLS; no trailer fallback), My List and Continue Watching (filtered to the catalogue).
+- No Series: `/tv` and `/tv/[id]` redirect home (Spool links uploads to movies only for now).
+- Unlinked Spool uploads are "creator videos": the "Fresh from Creators" row, `/spool`, `/spool/[id]`.
 
 - Data comes from Spool's **public API** only, fetched in the browser (fits the client-first rule):
   `GET {NEXT_PUBLIC_SPOOL_API_URL}/api/videos?limit=…` and `/api/videos/{id}`. No keys, no backend,
   no Supabase client here. Spool sends CORS headers, so the browser may call it from this site.
-- Playback: the API returns an HLS `hlsUrl` (480p + 720p). Play it with `{ kind: "hls", url }`
+- Playback: the API returns an HLS `hlsUrl` (adaptive, usually the original quality + 480p). Play it with `{ kind: "hls", url }`
   in `VideoPlayer` (hls.js). Spool thumbnails use a plain `<img>` because their host is environment-specific.
 - All Spool code lives in `src/lib/spool.ts`, `src/components/SpoolCard.tsx`, `src/components/SpoolRow.tsx`
   and `src/app/spool/`. If Spool is unconfigured or offline, Spool sections hide themselves; the rest
   of the site must keep working.
 - Ports: Spool's web app runs on **3000**, MSW on **3001** (`npm run dev`).
+- The Trailer button (TMDB/YouTube trailer modal) stays: it's a trailer OF an uploaded movie.

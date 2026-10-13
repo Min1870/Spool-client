@@ -3,14 +3,14 @@
 import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { ErrorState } from "@/components/ErrorBoundary";
 import MovieGrid from "@/components/MovieGrid";
 import { GridSkeleton } from "@/components/Skeleton";
-import { getTrendingAll, searchMulti } from "@/lib/tmdb";
+import { getCatalog } from "@/lib/catalog";
 import { useAsync } from "@/lib/useAsync";
 
-const DEBOUNCE_MS = 350;
+const DEBOUNCE_MS = 250;
 
+/** Search within MSW's catalogue only (movies uploaded to Spool). */
 function SearchResults() {
   const router = useRouter();
   const params = useSearchParams();
@@ -29,12 +29,18 @@ function SearchResults() {
     return () => window.clearTimeout(timer);
   }, [value, urlQuery, router]);
 
-  const results = useAsync(urlQuery ? `search:${urlQuery}` : null, () => searchMulti(urlQuery));
-  const trending = useAsync(urlQuery ? null : "trending:all", getTrendingAll);
-  const movies = (results.data?.results ?? []).filter((m) => m.posterPath);
+  const { data, loading } = useAsync("catalog", getCatalog);
+  const needle = urlQuery.toLowerCase();
+  const matches = (data ?? []).filter(
+    (m) =>
+      !needle ||
+      m.title.toLowerCase().includes(needle) ||
+      m.overview.toLowerCase().includes(needle) ||
+      m.cast.some((c) => c.name.toLowerCase().includes(needle)),
+  );
 
   return (
-    <div className="gutter pt-24 lg:pt-28">
+    <div className="gutter pt-24 pb-16 lg:pt-28">
       <div className="relative mx-auto mb-10 max-w-3xl">
         <Search className="pointer-events-none absolute left-5 top-1/2 size-6 -translate-y-1/2 text-white/50" aria-hidden />
         <input
@@ -42,8 +48,8 @@ function SearchResults() {
           autoFocus
           value={value}
           onChange={(e) => setDraft({ value: e.target.value, base: urlQuery })}
-          placeholder="Search movies and series…"
-          aria-label="Search movies and series"
+          placeholder="Search movies, actors…"
+          aria-label="Search movies"
           className="w-full rounded-2xl border border-white/15 bg-surface py-4 pl-14 pr-12 text-lg outline-none transition placeholder:text-white/40 focus:border-brand-violet focus:shadow-[0_0_0_4px_rgba(123,47,247,0.25)] [&::-webkit-search-cancel-button]:hidden"
         />
         {value && (
@@ -58,27 +64,24 @@ function SearchResults() {
         )}
       </div>
 
-      {urlQuery ? (
-        <section aria-live="polite">
-          <h1 className="mb-6 text-lg text-muted">
-            Results for <span className="font-semibold text-white">“{urlQuery}”</span>
-          </h1>
-          {results.error ? (
-            <ErrorState onRetry={results.retry} />
-          ) : !results.loading && movies.length === 0 ? (
-            <p className="py-16 text-center text-muted">
-              No titles match “{urlQuery}”. Try a different title or keyword.
-            </p>
+      <section aria-live="polite">
+        <h1 className="mb-6 text-lg text-muted">
+          {urlQuery ? (
+            <>
+              Results for <span className="font-semibold text-white">“{urlQuery}”</span>
+            </>
           ) : (
-            <MovieGrid movies={movies} loading={results.loading} />
+            <span className="font-display text-3xl font-bold text-white">All movies</span>
           )}
-        </section>
-      ) : (
-        <section>
-          <h1 className="mb-6 font-display text-3xl font-bold">Trending searches</h1>
-          <MovieGrid movies={trending.data ?? []} loading={trending.loading} />
-        </section>
-      )}
+        </h1>
+        {!loading && matches.length === 0 ? (
+          <p className="py-16 text-center text-muted">
+            {urlQuery ? `No movies match “${urlQuery}”.` : "No movies yet."}
+          </p>
+        ) : (
+          <MovieGrid movies={matches} loading={loading} />
+        )}
+      </section>
     </div>
   );
 }

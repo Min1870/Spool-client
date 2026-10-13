@@ -13,12 +13,12 @@ import { formatRuntime } from "@/lib/format";
 import {
   backdropUrl,
   episodeLabel,
-  getDetails,
   posterUrl,
   profileUrl,
   releaseYear,
   watchHref,
 } from "@/lib/tmdb";
+import { getCatalog } from "@/lib/catalog";
 import { useAsync } from "@/lib/useAsync";
 import type { CastMember, MediaType, MovieDetails } from "@/lib/types";
 import { usePlayerStore } from "@/store/usePlayerStore";
@@ -47,6 +47,7 @@ function PrimaryActions({ title }: { title: MovieDetails }) {
   const inList = useInWatchlist(title);
   const progress = useProgressFor(title);
 
+  // Every title on MSW is a movie uploaded to Spool, so Play always plays the full movie.
   const resumeLabel = progress
     ? progress.episode
       ? `Resume ${episodeLabel(progress.episode)}`
@@ -207,15 +208,18 @@ function Episodes({ show }: { show: MovieDetails }) {
 }
 
 export default function TitleDetails({ mediaType, id }: { mediaType: MediaType; id: number }) {
-  const valid = Number.isInteger(id);
-  const { data: title, error, loading, retry } = useAsync(valid ? `details:${mediaType}:${id}` : null, () =>
-    getDetails(mediaType, id),
-  );
+  const valid = Number.isInteger(id) && mediaType === "movie";
+  // Only movies in the catalogue (uploaded to Spool) have a page; anything else isn't on MSW.
+  const { data: catalog, error, loading, retry } = useAsync(valid ? "catalog" : null, getCatalog);
+  const title = catalog?.find((m) => m.id === id);
 
-  if (!valid || error) {
+  if (!valid || error || (catalog && !title)) {
     return (
       <div className="gutter mx-auto max-w-xl pt-32">
-        <ErrorState message="We couldn't find that title." onRetry={valid ? retry : undefined} />
+        <ErrorState
+          message={error ? "We couldn't load this title." : "This title isn't available on MSW."}
+          onRetry={error ? retry : undefined}
+        />
       </div>
     );
   }
@@ -250,12 +254,16 @@ export default function TitleDetails({ mediaType, id }: { mediaType: MediaType; 
         </section>
       )}
 
-      {title.similar.length > 0 && (
-        <section aria-label="More like this" className="gutter mt-10">
-          <h2 className="mb-4 text-xl font-semibold sm:text-2xl">More Like This</h2>
-          <MovieGrid movies={title.similar} />
-        </section>
-      )}
+      {(() => {
+        // "More like this" = other movies ON MSW sharing a genre (not TMDB's suggestions).
+        const others = (catalog ?? []).filter((m) => m.id !== title.id && m.genreIds.some((g) => title.genreIds.includes(g)));
+        return others.length > 0 ? (
+          <section aria-label="More like this" className="gutter mt-10">
+            <h2 className="mb-4 text-xl font-semibold sm:text-2xl">More Like This</h2>
+            <MovieGrid movies={others} />
+          </section>
+        ) : null;
+      })()}
     </>
   );
 }

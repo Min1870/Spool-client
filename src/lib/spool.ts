@@ -8,11 +8,23 @@ import type { Movie, PlayerSource } from "./types";
  *
  *   GET {SPOOL}/api/videos?limit=20  → { videos: SpoolVideo[] }   (ready videos only)
  *   GET {SPOOL}/api/videos/{id}      → SpoolVideo
+ *
+ * Uploads linked to a TMDB movie are MSW's movie catalogue (see catalog.ts); unlinked
+ * uploads are "creator videos" (the Creators page).
  */
 
 const SPOOL_API = process.env.NEXT_PUBLIC_SPOOL_API_URL?.replace(/\/+$/, "");
 
 export const hasSpool = Boolean(SPOOL_API);
+
+/** Which TMDB entry a Spool upload is (set by the uploader in Spool's admin). */
+export interface SpoolTmdbLink {
+  type: "movie" | "tv";
+  id: number;
+  title: string | null;
+  year: number | null;
+  posterUrl: string | null;
+}
 
 /** A video as Spool's public API returns it. */
 export interface SpoolVideo {
@@ -29,6 +41,8 @@ export interface SpoolVideo {
   /** The video's page on Spool itself. */
   watchUrl: string;
   embedUrl: string;
+  /** Set when this upload is a TMDB movie. */
+  tmdb: SpoolTmdbLink | null;
 }
 
 async function spoolFetch<T>(path: string): Promise<T> {
@@ -39,10 +53,15 @@ async function spoolFetch<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** Newest ready videos. Resolves to [] if Spool isn't configured or reachable, so the rest of the site keeps working. */
-export async function getSpoolVideos(limit = 20): Promise<SpoolVideo[]> {
+/**
+ * Newest ready videos. `linked`: true = only uploads linked to TMDB movies, false = only
+ * creator originals. Resolves to [] if Spool isn't configured or reachable, so the rest of
+ * the site keeps working.
+ */
+export async function getSpoolVideos(limit = 20, { linked }: { linked?: boolean } = {}): Promise<SpoolVideo[]> {
   try {
-    const data = await spoolFetch<{ videos: SpoolVideo[] }>(`/api/videos?limit=${limit}`);
+    const filter = linked === undefined ? "" : `&linked=${linked}`;
+    const data = await spoolFetch<{ videos: SpoolVideo[] }>(`/api/videos?limit=${limit}${filter}`);
     return data.videos;
   } catch (error) {
     if (hasSpool) console.warn("[spool] couldn't load videos:", (error as Error).message);

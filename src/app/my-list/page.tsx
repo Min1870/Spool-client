@@ -4,11 +4,17 @@ import { Bookmark } from "lucide-react";
 import Link from "next/link";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import MovieGrid from "@/components/MovieGrid";
+import { getCatalogIds } from "@/lib/catalog";
+import { useAsync } from "@/lib/useAsync";
 import { useWatchStore } from "@/store/useWatchStore";
 
 export default function MyListPage() {
-  const watchlist = useWatchStore((s) => s.watchlist);
-  const hydrated = useWatchStore((s) => s.hydrated);
+  const saved = useWatchStore((s) => s.watchlist);
+  const storeHydrated = useWatchStore((s) => s.hydrated);
+  // Show only saved titles that are on MSW (uploaded to Spool).
+  const { data: onMsw } = useAsync("catalog:ids", getCatalogIds);
+  const hydrated = storeHydrated && onMsw !== undefined;
+  const watchlist = saved.filter((m) => m.mediaType === "movie" && onMsw?.has(m.id));
 
   return (
     <div className="pt-24 lg:pt-28">
